@@ -10,82 +10,100 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  final user = FirebaseAuth.instance.currentUser;
+  final _formKey = GlobalKey<FormState>();
 
-  final nameCtrl = TextEditingController();
-  final locationCtrl = TextEditingController();
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
 
-  bool isLoading = false;
+  bool _isLoading = true;
+  bool _isSaving = false;
 
-  @override
-  void dispose() {
-    nameCtrl.dispose();
-    locationCtrl.dispose();
-    super.dispose();
-  }
-
-  Future<void> loadUserData() async {
-    if (user == null) return;
-    final doc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(user!.uid)
-        .get();
-
-    if (!doc.exists) return;
-    final data = doc.data()!;
-
-    nameCtrl.text = (data["fullName"] ?? "") as String;
-    locationCtrl.text = (data["location"] ?? "") as String;
-  }
+  User? user;
 
   @override
   void initState() {
     super.initState();
-    loadUserData();
+    user = FirebaseAuth.instance.currentUser;
+    _loadUserData();
   }
 
-  void showMsg(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
-  }
-
-  Future<void> handleSave() async {
-    if (user == null) return;
-
-    final name = nameCtrl.text.trim();
-    final location = locationCtrl.text.trim();
-
-    if (name.isEmpty) {
-      showMsg("Nama tidak boleh kosong");
+  Future<void> _loadUserData() async {
+    if (user == null) {
+      setState(() => _isLoading = false);
       return;
     }
 
-    setState(() => isLoading = true);
-
     try {
-      await FirebaseFirestore.instance
+      final doc = await FirebaseFirestore.instance
           .collection("users")
           .doc(user!.uid)
-          .set({
-        "fullName": name,
-        "location": location.isEmpty ? "Jakarta, Indonesia" : location,
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+
+        _fullNameController.text = data["fullName"] ?? "";
+        _locationController.text = data["location"] ?? "";
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to load profile: $e")),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _saveProfile() async {
+    if (user == null) return;
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isSaving = true);
+
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(user!.uid).set({
+        "fullName": _fullNameController.text.trim(),
+        "location": _locationController.text.trim(),
+        "email": user!.email,
         "updatedAt": FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
       if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Profile updated")),
+      );
+
       Navigator.pop(context); // balik ke ProfileScreen
     } catch (e) {
-      showMsg(e.toString());
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to update profile: $e")),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
     }
+  }
 
-    if (mounted) setState(() => isLoading = false);
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (user == null) {
+      return const Scaffold(
+        body: Center(child: Text("User belum login")),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           "Edit Profile",
@@ -95,61 +113,85 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 45,
-              backgroundColor: Colors.black,
-              child: Icon(Icons.person, color: Colors.white, size: 45),
-            ),
-            const SizedBox(height: 20),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    const CircleAvatar(
+                      radius: 45,
+                      backgroundColor: Colors.black,
+                      child: Icon(Icons.person, color: Colors.white, size: 45),
+                    ),
+                    const SizedBox(height: 20),
 
-            TextField(
-              controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: "Full Name",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 15),
-
-            TextField(
-              controller: locationCtrl,
-              decoration: const InputDecoration(
-                labelText: "Location",
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 25),
-
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: isLoading ? null : handleSave,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                    TextFormField(
+                      controller: _fullNameController,
+                      decoration: InputDecoration(
+                        labelText: "Full Name",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                      )
-                    : const Text(
-                        "Save",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return "Full name cannot be empty";
+                        }
+                        return null;
+                      },
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    TextFormField(
+                      controller: _locationController,
+                      decoration: InputDecoration(
+                        labelText: "Location",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 25),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: _isSaving ? null : _saveProfile,
+                        child: _isSaving
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                "Save",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
