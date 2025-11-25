@@ -180,7 +180,7 @@ class SettingsScreen extends StatelessWidget {
               });
               onChanged(value); // Panggil fungsi utama saat nilai berubah
             },
-            activeColor: Colors.black, // Warna aktif
+            activeThumbColor: Colors.black, // Warna aktif
           ),
           onTap: () {
             // Membalikkan nilai saat tap pada seluruh tile

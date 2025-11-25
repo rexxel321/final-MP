@@ -1,10 +1,60 @@
 import 'package:flutter/material.dart';
-// Ganti 'flutter_application_1' dengan nama proyek Anda yang sebenarnya
-import 'package:flutter_application_1/screens/SignUpScreen.dart'; 
-import 'package:flutter_application_1/screens/main_tab_screen.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LoginScreen extends StatelessWidget {
+import 'package:finalmp/screens/SignUpScreen.dart';
+import 'package:finalmp/screens/main_tab_screen.dart';
+
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailCtrl = TextEditingController();
+  final TextEditingController passCtrl = TextEditingController();
+
+  bool isLoading = false;
+
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    passCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> handleLogin() async {
+    setState(() => isLoading = true);
+
+    try {
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: emailCtrl.text.trim(),
+        password: passCtrl.text.trim(),
+      );
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const MainTabScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      String msg = "Login failed";
+      if (e.code == "user-not-found") msg = "User tidak ditemukan";
+      if (e.code == "wrong-password") msg = "Password salah";
+      if (e.code == "invalid-email") msg = "Format email tidak valid";
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+
+    if (mounted) setState(() => isLoading = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +66,6 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              // 1. Ikon Hati (Love Icon)
               const Icon(
                 Icons.favorite_border,
                 size: 80,
@@ -24,9 +73,8 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
 
-              // 2. Teks "Welcome Back"
               const Text(
-                'Welcome Back',
+                "Welcome Back",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
@@ -34,109 +82,111 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 30),
 
-              // 3. Email/Username Input
-              const TextField(
-                decoration: InputDecoration(
-                  hintText: 'Email / Username',
+              // Email
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  hintText: "Email / Username",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
-                  contentPadding: EdgeInsets.symmetric(
-                      vertical: 15.0, horizontal: 20.0),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                 ),
               ),
               const SizedBox(height: 15),
 
-              // 4. Password Input
-              const TextField(
+              // Password
+              TextField(
+                controller: passCtrl,
                 obscureText: true,
-                decoration: InputDecoration(
-                  hintText: 'Password',
+                decoration: const InputDecoration(
+                  hintText: "Password",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(10.0)),
                   ),
-                  contentPadding: EdgeInsets.symmetric(
-                      vertical: 15.0, horizontal: 20.0),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0),
                 ),
               ),
               const SizedBox(height: 5),
 
-              // 5. Forgot Password
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Implementasi Forgot Password
+                    // nanti kita isi reset password
                   },
-                  child: const Text('Forgot Password?',
-                      style: TextStyle(color: Colors.black)),
+                  child: const Text(
+                    "Forgot Password?",
+                    style: TextStyle(color: Colors.black),
+                  ),
                 ),
               ),
               const SizedBox(height: 15),
 
-              // 6. Login Button (Navigasi ke MainTabScreen)
+              // Login Button with loading
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // NAVIGASI SETELAH LOGIN SUKSES
-                    Navigator.pushReplacement( 
-                      context,
-                      MaterialPageRoute(
-                        // Menggantikan LoginScreen dengan MainTabScreen
-                        builder: (context) => const MainTabScreen(), 
-                      ),
-                    );
-                  },
+                  onPressed: isLoading ? null : handleLogin,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black, // Background hitam
+                    backgroundColor: Colors.black,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white, // Teks putih
-                    ),
-                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          "Login",
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.white,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // 7. OR Divider
               const Row(
                 children: <Widget>[
                   Expanded(child: Divider(thickness: 1)),
                   Padding(
                     padding: EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Text('or'),
+                    child: Text("or"),
                   ),
                   Expanded(child: Divider(thickness: 1)),
                 ],
               ),
               const SizedBox(height: 20),
 
-              // 8. Continue with Google Button
+              // Google button (asset skip dulu)
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    // TODO: Implementasi Google Sign-in
+                    // nanti kita isi google sign in
                   },
                   icon: Image.asset(
-                    'assets/google_icon.png', 
+                    "assets/google_icon.png",
                     height: 20.0,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(Icons.g_mobiledata, size: 24);
+                    },
                   ),
                   label: const Text(
-                    'Continue with Google',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
-                    ),
+                    "Continue with Google",
+                    style: TextStyle(fontSize: 16, color: Colors.black),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Colors.black),
@@ -148,23 +198,21 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 20),
 
-              // 9. Don't have an account? Sign Up (Navigasi ke SignUpScreen)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   const Text("Don't have an account?"),
                   TextButton(
                     onPressed: () {
-                      // NAVIGASI KE SIGN UP SCREEN
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SignUpScreen(),
+                          builder: (_) => const SignUpScreen(),
                         ),
                       );
                     },
                     child: const Text(
-                      'Sign Up',
+                      "Sign Up",
                       style: TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.bold,

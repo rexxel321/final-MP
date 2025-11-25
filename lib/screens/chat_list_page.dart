@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // Import model Chat
-import 'package:flutter_application_1/models/product_model.dart'; 
+import 'package:finalmp/models/product_model.dart'; 
 // Import ChatPage untuk navigasi saat item diklik
-import 'package:flutter_application_1/screens/chat_page.dart'; 
+import 'package:finalmp/screens/chat_page.dart'; 
 
 class ChatListPage extends StatelessWidget {
   const ChatListPage({super.key});

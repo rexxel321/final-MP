@@ -1,9 +1,9 @@
 // lib/screens/home_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/product_model.dart';
-import 'package:flutter_application_1/models/product_detail_screen.dart'; 
-import 'package:flutter_application_1/screens/app_drawer.dart'; 
+import 'package:finalmp/models/product_model.dart';
+import 'package:finalmp/models/product_detail_screen.dart'; 
+import 'package:finalmp/screens/app_drawer.dart'; 
 
 
 class HomeScreen extends StatefulWidget {

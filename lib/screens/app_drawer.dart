@@ -1,9 +1,9 @@
 // lib/widgets/app_drawer.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/product_model.dart';
-import 'package:flutter_application_1/screens/wishlist_screen.dart';
-import 'package:flutter_application_1/screens/settings_screen.dart';
+import 'package:finalmp/models/product_model.dart';
+import 'package:finalmp/screens/wishlist_screen.dart';
+import 'package:finalmp/screens/settings_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final Set<String> wishlistIds;

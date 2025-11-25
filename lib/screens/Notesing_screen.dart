@@ -115,7 +115,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   labelText: 'Category',
                   border: OutlineInputBorder(),
                 ),
-                value: _selectedCategory,
+                initialValue: _selectedCategory,
                 hint: const Text('Select a category'),
                 items: _categories.map((String category) {
                   return DropdownMenuItem<String>(
@@ -144,7 +144,7 @@ class _CreateListingScreenState extends State<CreateListingScreen> {
                   labelText: 'Condition',
                   border: OutlineInputBorder(),
                 ),
-                value: _selectedCondition,
+                initialValue: _selectedCondition,
                 hint: const Text('Select item condition'),
                 items: _conditions.map((String condition) {
                   return DropdownMenuItem<String>(
