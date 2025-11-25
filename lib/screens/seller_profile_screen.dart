@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // Import kelas Seller
-import 'package:flutter_application_1/models/product_model.dart'; 
+import 'package:finalmp/models/product_model.dart'; 
 
 class SellerProfileScreen extends StatelessWidget {
   final Seller seller;

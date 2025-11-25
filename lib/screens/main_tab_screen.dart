@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/home_screen.dart';
-import 'package:flutter_application_1/screens/chat_list_page.dart';
-import 'package:flutter_application_1/screens/profile_screen.dart'; 
-import 'package:flutter_application_1/screens/search_screen.dart'; 
-import 'package:flutter_application_1/screens/Notesing_screen.dart'; // Import Halaman Sell
+import 'package:finalmp/screens/home_screen.dart';
+import 'package:finalmp/screens/chat_list_page.dart';
+import 'package:finalmp/screens/profile_screen.dart'; 
+import 'package:finalmp/screens/search_screen.dart'; 
+import 'package:finalmp/screens/Notesing_screen.dart'; // Import Halaman Sell
 
 class MainTabScreen extends StatefulWidget {
   const MainTabScreen({super.key});

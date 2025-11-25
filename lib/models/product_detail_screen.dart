@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 // Import kelas Product dan Seller
-import 'package:flutter_application_1/models/product_model.dart'; 
+import 'package:finalmp/models/product_model.dart'; 
 // Import Seller Profile Screen untuk navigasi
-import 'package:flutter_application_1/screens/seller_profile_screen.dart'; 
+import 'package:finalmp/screens/seller_profile_screen.dart'; 
 
 class ProductDetailScreen extends StatelessWidget {
   final Product product;

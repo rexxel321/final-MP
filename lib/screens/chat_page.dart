@@ -1,8 +1,8 @@
 // lib/screens/chat_page.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/product_model.dart';
-import 'package:flutter_application_1/models/product_detail_screen.dart'; 
+import 'package:finalmp/models/product_model.dart';
+import 'package:finalmp/models/product_detail_screen.dart'; 
 
 class ChatPage extends StatelessWidget {
   final Chat chatData; 
