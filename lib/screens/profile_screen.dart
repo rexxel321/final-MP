@@ -2,23 +2,102 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'login_screen.dart';
-import 'edit_profile_screen.dart';
+import 'package:finalmp/screens/login_screen.dart';
+import 'package:finalmp/screens/edit_profile_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
 
+class _ProfileScreenState extends State<ProfileScreen> {
+  final user = FirebaseAuth.instance.currentUser;
+
+  Future<void> handleLogout() async {
+    await FirebaseAuth.instance.signOut();
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (user == null) {
-      // kalau somehow belum login
-      return const Center(child: Text("Not logged in"));
+      return const Scaffold(
+        body: Center(child: Text("User belum login")),
+      );
     }
 
-    final uid = user.uid;
+    final uid = user!.uid;
 
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection("users").doc(uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: Colors.white,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return _buildScaffold(
+            context,
+            fullName: user!.email ?? "No Name",
+            location: "Unknown location",
+            rating: 0.0,
+            reviews: 0,
+            onLogout: handleLogout,
+            onEdit: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+              );
+            },
+          );
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+
+        final fullName = (data["fullName"] ?? user!.email ?? "No Name") as String;
+        final location = (data["location"] ?? "Jakarta, Indonesia") as String;
+
+        final totalReviews = (data["totalReviews"] ?? 45) as int;
+        final userRating = (data["userRating"] ?? 4.7).toDouble();
+
+        return _buildScaffold(
+          context,
+          fullName: fullName,
+          location: location,
+          rating: userRating,
+          reviews: totalReviews,
+          onLogout: handleLogout,
+          onEdit: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Scaffold _buildScaffold(
+    BuildContext context, {
+    required String fullName,
+    required String location,
+    required double rating,
+    required int reviews,
+    required VoidCallback onLogout,
+    required VoidCallback onEdit,
+  }) {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -31,142 +110,110 @@ class ProfileScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
+            icon: const Icon(Icons.edit, color: Colors.black),
+            onPressed: onEdit,
+            tooltip: "Edit Profile",
+          ),
+          IconButton(
             icon: const Icon(Icons.settings, color: Colors.black),
             onPressed: () {
-              // optional: ke settings screen
+              // TODO: Settings screen kalau ada
             },
-          )
+          ),
         ],
       ),
-      body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance.collection("users").doc(uid).snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text("User data not found"));
-          }
-
-          final data = snapshot.data!.data() as Map<String, dynamic>;
-
-          final fullName = data["fullName"] ?? "No Name";
-          final email = data["email"] ?? user.email ?? "-";
-          final location = data["location"] ?? "No location";
-          final photoUrl = data["photoUrl"];
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 10),
-
-                // Header profile
-                Center(
-                  child: Column(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Center(
+              child: Column(
+                children: [
+                  const CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.black,
+                    child: Icon(Icons.person, color: Colors.white, size: 40),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    fullName,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircleAvatar(
-                        radius: 40,
-                        backgroundColor: Colors.black,
-                        backgroundImage: (photoUrl != null && photoUrl.toString().isNotEmpty)
-                            ? NetworkImage(photoUrl)
-                            : null,
-                        child: (photoUrl == null || photoUrl.toString().isEmpty)
-                            ? const Icon(Icons.person, color: Colors.white, size: 40)
-                            : null,
-                      ),
-                      const SizedBox(height: 10),
                       Text(
-                        fullName,
-                        style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        rating.toStringAsFixed(1),
+                        style: const TextStyle(color: Colors.black),
                       ),
+                      const Icon(Icons.star, color: Colors.amber, size: 16),
                       Text(
-                        email,
+                        ' ($reviews reviews)',
                         style: const TextStyle(color: Colors.grey),
                       ),
-                      const SizedBox(height: 10),
-
-                      // tombol edit profile
-                      OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => EditProfileScreen(userData: data)),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.black),
-                        ),
-                        child: const Text(
-                          "Edit Profile",
-                          style: TextStyle(color: Colors.black),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
 
-                // Statistik dummy tetap boleh
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatCard('12', 'Items Listed'),
-                    _buildStatCard('5.5K', 'Followers'),
-                    _buildStatCard('30%', 'Sales Growth'),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                Row(
-                  children: [
-                    const Icon(Icons.location_on_outlined, size: 20, color: Colors.black),
-                    const SizedBox(width: 8),
-                    Text(location, style: const TextStyle(fontSize: 16)),
-                  ],
-                ),
-                const SizedBox(height: 15),
-
-                const SizedBox(height: 30),
-
-                const Text(
-                  'Account',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                _buildProfileTile(Icons.shopping_bag_outlined, 'My Orders', () {}),
-                _buildProfileTile(Icons.favorite_border, 'Watchlist', () {}),
-                _buildProfileTile(Icons.reviews_outlined, 'My Reviews', () {}),
-
-                const SizedBox(height: 20),
-
-                const Text(
-                  'Help & Support',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 10),
-                _buildProfileTile(Icons.help_outline, 'Help Center', () {}),
-
-                // LOGOUT real
-                _buildProfileTile(Icons.logout, 'Logout', () async {
-                  await FirebaseAuth.instance.signOut();
-                  if (context.mounted) {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
-                      (route) => false,
-                    );
-                  }
-                }),
-
-                const SizedBox(height: 50),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildStatCard('12', 'Items Listed'),
+                _buildStatCard('5.5K', 'Followers'),
+                _buildStatCard('30%', 'Sales Growth'),
               ],
             ),
-          );
-        },
+            const SizedBox(height: 30),
+
+            Row(
+              children: [
+                const Icon(Icons.location_on_outlined,
+                    size: 20, color: Colors.black),
+                const SizedBox(width: 8),
+                Text(location, style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 15),
+            Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined,
+                    size: 20, color: Colors.black),
+                const SizedBox(width: 8),
+                const Text('Joined since Mar 2022',
+                    style: TextStyle(fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 30),
+
+            const Text(
+              'Account',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildProfileTile(Icons.shopping_bag_outlined, 'My Orders', () {}),
+            _buildProfileTile(Icons.favorite_border, 'Watchlist', () {}),
+            _buildProfileTile(Icons.reviews_outlined, 'My Reviews', () {}),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'Help & Support',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+            _buildProfileTile(Icons.help_outline, 'Help Center', () {}),
+            _buildProfileTile(Icons.logout, 'Logout', onLogout),
+
+            const SizedBox(height: 50),
+          ],
+        ),
       ),
     );
   }
@@ -181,8 +228,14 @@ class ProfileScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 14, color: Colors.grey),
+          ),
         ],
       ),
     );
@@ -192,7 +245,8 @@ class ProfileScreen extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, color: Colors.black),
       title: Text(title, style: const TextStyle(fontSize: 16)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: onTap,
     );
   }
