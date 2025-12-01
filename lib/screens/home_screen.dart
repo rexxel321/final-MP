@@ -1,10 +1,11 @@
 // lib/screens/home_screen.dart
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:finalmp/models/product_model.dart';
-import 'package:finalmp/models/product_detail_screen.dart'; 
-import 'package:finalmp/screens/app_drawer.dart'; 
 
+import 'package:finalmp/models/product_model.dart';
+import 'package:finalmp/screens/product_detail_screen.dart';
+import 'package:finalmp/screens/app_drawer.dart'; // kalau file AppDrawer kamu di folder lain, sesuaikan path-nya
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -14,32 +15,79 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 1. DATA WISHLIST (DIKELOLA SEBAGAI STATE LOKAL)
-  final Set<String> _wishlistIds = {'P001', 'P003'}; // Contoh ID yang sudah difavoritkan
-  
-  // Data Dummy Produk LENGKAP (termasuk ID baru)
+  // Wishlist lokal (dummy)
+  final Set<String> _wishlistIds = {'P001', 'P003'};
+
+  // Dummy data produk (fallback kalau Firestore kosong / error)
   final List<Product> itemData = const [
     Product(
-      id: 'P001', title: 'Vintage Denim', price: '\$24', condition: 'Like New', size: 'M', brand: 'Vintage Denim', category: 'Clothing', 
-      description: 'Deskripsi Item P001', sellerName: 'Sarah Johnson', sellerRating: 4.8, totalSales: 234, discount: '30% OFF'),
+      id: 'P001',
+      title: 'Vintage Denim',
+      price: '24000', // angka murni (nanti ditampilkan sebagai Rp24000)
+      imageUrl: 'https://via.placeholder.com/400x300?text=Vintage+Denim',
+      condition: 'Like New',
+      size: 'M',
+      brand: 'Vintage Denim',
+      category: 'Clothing',
+      description: 'Deskripsi Item P001',
+      sellerName: 'Sarah Johnson',
+      sellerRating: 4.8,
+      totalSales: 234,
+      discount: '30% OFF',
+    ),
     Product(
-      id: 'P002', title: 'Nike Air Max', price: '\$45', condition: 'Good', size: 'US 9', brand: 'Nike', category: 'Shoes', 
-      description: 'Deskripsi Item P002', sellerName: 'Rian Putra', sellerRating: 4.5, totalSales: 150, discount: ''),
+      id: 'P002',
+      title: 'Nike Air Max',
+      price: '45000',
+      imageUrl: 'https://via.placeholder.com/400x300?text=Nike+Air+Max',
+      condition: 'Good',
+      size: 'US 9',
+      brand: 'Nike',
+      category: 'Shoes',
+      description: 'Deskripsi Item P002',
+      sellerName: 'Rian Putra',
+      sellerRating: 4.5,
+      totalSales: 150,
+      discount: '',
+    ),
     Product(
-      id: 'P003', title: 'Retro Items Collection', price: '\$18', condition: 'Excellent', size: 'N/A', brand: 'Various', category: 'Accessories', 
-      description: 'Deskripsi Item P003', sellerName: 'Maya Sari', sellerRating: 4.9, totalSales: 300, discount: '20% OFF'),
+      id: 'P003',
+      title: 'Retro Items Collection',
+      price: '18000',
+      imageUrl: 'https://via.placeholder.com/400x300?text=Retro+Items',
+      condition: 'Excellent',
+      size: 'N/A',
+      brand: 'Various',
+      category: 'Accessories',
+      description: 'Deskripsi Item P003',
+      sellerName: 'Maya Sari',
+      sellerRating: 4.9,
+      totalSales: 300,
+      discount: '20% OFF',
+    ),
     Product(
-      id: 'P004', title: 'Designer Leather Bag', price: '\$32', condition: 'Like New', size: 'One Size', brand: 'Luxury Brand', category: 'Bags', 
-      description: 'Deskripsi Item P004', sellerName: 'Bella Anggun', sellerRating: 4.7, totalSales: 90, discount: ''),
+      id: 'P004',
+      title: 'Designer Leather Bag',
+      price: '32000',
+      imageUrl: 'https://via.placeholder.com/400x300?text=Leather+Bag',
+      condition: 'Like New',
+      size: 'One Size',
+      brand: 'Luxury Brand',
+      category: 'Bags',
+      description: 'Deskripsi Item P004',
+      sellerName: 'Bella Anggun',
+      sellerRating: 4.7,
+      totalSales: 90,
+      discount: '',
+    ),
   ];
 
-  // 2. FUNGSI LOGIKA TOMBOL HATI
   void _toggleWishlist(String productId) {
     setState(() {
       if (_wishlistIds.contains(productId)) {
-        _wishlistIds.remove(productId); // Hapus jika sudah ada
+        _wishlistIds.remove(productId);
       } else {
-        _wishlistIds.add(productId); // Tambahkan jika belum ada
+        _wishlistIds.add(productId);
       }
     });
   }
@@ -50,45 +98,42 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       endDrawer: AppDrawer(
         wishlistIds: _wishlistIds,
-        allProducts: itemData,
+        allProducts: itemData, // drawer masih pakai dummy
       ),
-      
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 15.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              const SizedBox(height: 50), 
+              const SizedBox(height: 50),
 
-              // 1. Header (Icon Hati dan Menu)
+              // Header (ikon hati + menu)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: <Widget>[
-                  // Ikon Hati (Navigasi)
                   const Icon(Icons.favorite_border, size: 28),
-                  
                   Builder(
                     builder: (context) {
                       return IconButton(
                         icon: const Icon(Icons.menu, size: 28),
                         onPressed: () {
-                          Scaffold.of(context).openEndDrawer(); 
+                          Scaffold.of(context).openEndDrawer();
                         },
                       );
-                    }
+                    },
                   ),
                 ],
               ),
               const SizedBox(height: 10),
 
-              // ... (Search Bar, Kategori, Banner, Hot Items Title tetap sama) ...
-              
+              // Search bar
               TextField(
                 decoration: InputDecoration(
                   hintText: 'Search for items...',
                   prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 10.0),
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 10.0),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
                     borderSide: const BorderSide(color: Colors.grey),
@@ -99,12 +144,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10.0),
-                    borderSide: const BorderSide(color: Colors.black, width: 2),
+                    borderSide:
+                        const BorderSide(color: Colors.black, width: 2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
+              // Category pills
               SizedBox(
                 height: 40,
                 child: ListView(
@@ -120,14 +167,15 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 20),
 
+              // Banner
               Container(
                 height: 200,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300], 
+                  color: Colors.grey[300],
                   borderRadius: BorderRadius.circular(10.0),
                   image: const DecorationImage(
-                    image: AssetImage('assets/banner_image.png'), 
+                    image: AssetImage('assets/banner_image.png'),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -148,9 +196,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(height: 10),
                       Row(
                         children: [
-                          _buildBannerButton('Start Selling', Colors.black, Colors.white, () {}),
+                          _buildBannerButton(
+                            'Start Selling',
+                            Colors.black,
+                            Colors.white,
+                            () {},
+                          ),
                           const SizedBox(width: 10),
-                          _buildBannerButton('How It Works', Colors.white, Colors.black, () {}),
+                          _buildBannerButton(
+                            'How It Works',
+                            Colors.white,
+                            Colors.black,
+                            () {},
+                          ),
                         ],
                       ),
                     ],
@@ -168,22 +226,44 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 10),
 
-              // 6. Grid View Items (2 kolom)
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 15.0,
-                  mainAxisSpacing: 15.0,
-                  childAspectRatio: 0.65, 
-                ),
-                itemCount: itemData.length, // Menggunakan itemData.length
-                itemBuilder: (context, index) {
-                  return _buildGridItem(context, itemData[index]); 
+              // GRID VIEW – ambil data dari Firestore, fallback ke dummy
+              StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('products')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  List<Product> products;
+
+                  if (snapshot.hasError) {
+                    products = itemData;
+                  } else if (snapshot.hasData &&
+                      snapshot.data!.docs.isNotEmpty) {
+                    products = snapshot.data!.docs
+                        .map((doc) => Product.fromFirestore(doc))
+                        .toList();
+                  } else {
+                    products = itemData;
+                  }
+
+                  return GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 15.0,
+                      mainAxisSpacing: 15.0,
+                      childAspectRatio: 0.65,
+                    ),
+                    itemCount: products.length,
+                    itemBuilder: (context, index) {
+                      return _buildGridItem(context, products[index]);
+                    },
+                  );
                 },
               ),
-              const SizedBox(height: 15), 
+
+              const SizedBox(height: 15),
             ],
           ),
         ),
@@ -191,11 +271,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Helper Widget: Item Grid yang DAPAT DIKLIK dan menavigasi
+  // Item grid yang bisa diklik
   Widget _buildGridItem(BuildContext context, Product data) {
-    // Cek apakah item ini ada di wishlist
-    bool isFavorite = _wishlistIds.contains(data.id);
-    
+    final isFavorite = _wishlistIds.contains(data.id);
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -214,37 +293,65 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            // Gambar Produk
+            // Gambar produk
             Stack(
               children: [
-                Container(
+                SizedBox(
                   height: 150,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300], 
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(10.0)),
+                  width: double.infinity,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(10.0),
+                    ),
+                    child: data.imageUrl.isNotEmpty
+                        ? Image.network(
+                            data.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return Container(
+                                color: Colors.grey[300],
+                                alignment: Alignment.center,
+                                child: Text(
+                                  data.title.split(' ').first,
+                                  style: const TextStyle(color: Colors.black),
+                                ),
+                              );
+                            },
+                          )
+                        : Container(
+                            color: Colors.grey[300],
+                            alignment: Alignment.center,
+                            child: Text(
+                              data.title.split(' ').first,
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                          ),
                   ),
-                  child: Center(child: Text(data.title.split(' ')[0], style: const TextStyle(color: Colors.black))), 
                 ),
-                
-                // Label Diskon
                 if (data.discount.isNotEmpty)
                   Positioned(
                     top: 10,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
                       decoration: const BoxDecoration(
                         color: Colors.black,
-                        borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
+                        borderRadius: BorderRadius.horizontal(
+                          left: Radius.circular(5),
+                        ),
                       ),
                       child: Text(
                         data.discount,
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
-                
-                // 3. Ikon Hati yang Interaktif
                 Positioned(
                   top: 5,
                   right: 5,
@@ -255,37 +362,50 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 20,
                     ),
                     onPressed: () {
-                      _toggleWishlist(data.id); // Panggil fungsi toggle
+                      _toggleWishlist(data.id);
                     },
                   ),
                 ),
               ],
             ),
-            
-            // Detail Produk
+
+            // Detail produk
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Text(
-                    data.price,
+                    'Rp${_cleanPrice(data.price)}',
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     data.title,
                     style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.w500),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(data.size, style: const TextStyle(color: Colors.grey)),
-                      const Text(' • ', style: TextStyle(color: Colors.grey)),
-                      Text(data.condition, style: const TextStyle(color: Colors.grey)),
+                      Text(
+                        data.size,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const Text(
+                        ' • ',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      Text(
+                        data.condition,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
                     ],
                   ),
                 ],
@@ -297,20 +417,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- Helper Widgets Lain (tetap sama) ---
+  /// Hapus karakter non-angka dari price,
+  /// jadi "$24" → "24", "20000" → "20000"
+  String _cleanPrice(String raw) {
+    final cleaned = raw.replaceAll(RegExp(r'[^0-9]'), '');
+    return cleaned.isEmpty ? raw : cleaned;
+  }
+
+  // Category pill
   Widget _buildCategoryPill(String title, bool isSelected) {
     return Padding(
       padding: const EdgeInsets.only(right: 10.0),
       child: Chip(
         label: Text(
-          title, 
+          title,
           style: TextStyle(
             color: isSelected ? Colors.white : Colors.black,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            fontWeight:
+                isSelected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         backgroundColor: isSelected ? Colors.black : Colors.white,
-        side: BorderSide(color: Colors.grey.shade300), 
+        side: BorderSide(color: Colors.grey.shade300),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
@@ -318,8 +446,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Banner button
   Widget _buildBannerButton(
-      String text, Color bgColor, Color textColor, VoidCallback onPressed) {
+    String text,
+    Color bgColor,
+    Color textColor,
+    VoidCallback onPressed,
+  ) {
     return SizedBox(
       height: 35,
       child: ElevatedButton(
@@ -328,11 +461,19 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: bgColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: textColor == Colors.black ? Colors.white : Colors.black, width: 1.5), 
+            side: BorderSide(
+              color: textColor == Colors.black
+                  ? Colors.white
+                  : Colors.black,
+              width: 1.5,
+            ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 15),
         ),
-        child: Text(text, style: TextStyle(color: textColor, fontSize: 14)),
+        child: Text(
+          text,
+          style: TextStyle(color: textColor, fontSize: 14),
+        ),
       ),
     );
   }

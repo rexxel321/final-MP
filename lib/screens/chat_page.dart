@@ -2,18 +2,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:finalmp/models/product_model.dart';
-import 'package:finalmp/models/product_detail_screen.dart'; 
+import 'package:finalmp/screens/product_detail_screen.dart';
 
 class ChatPage extends StatelessWidget {
-  final Chat chatData; 
+  final Chat chatData;
 
   const ChatPage({super.key, required this.chatData});
 
-  // Data Dummy Produk yang Sedang Dibicarakan (KOREKSI: Menambahkan ID)
+  // Data Dummy Produk yang Sedang Dibicarakan
   final Product discussedProduct = const Product(
-    id: 'D001', // <--- KOREKSI INI
+    id: 'D001',
     title: 'Vintage Denim Jacket',
-    price: '\$24',
+    price: '24000', // akan ditampilkan jadi Rp24000 di tempat lain
+    imageUrl:
+        'https://via.placeholder.com/400x300?text=Vintage+Denim+Jacket', // <-- WAJIB, biar sesuai model
     condition: 'Like New',
     size: 'M',
     brand: 'Vintage Denim',
@@ -25,11 +27,11 @@ class ChatPage extends StatelessWidget {
     discount: '',
   );
 
-
-  // Data Dummy Pesan (tetap sama)
+  // Data Dummy Pesan
   final List<Message> dummyMessages = const [
     Message(
-      text: 'Hi! Thanks for your interest in the item. Let me know if you have any questions!',
+      text:
+          'Hi! Thanks for your interest in the item. Let me know if you have any questions!',
       time: '10:30 AM',
       isMe: false,
     ),
@@ -49,7 +51,8 @@ class ChatPage extends StatelessWidget {
       isMe: true,
     ),
     Message(
-      text: 'It\'s in excellent condition, barely worn. I can send you more photos if you\'d like!',
+      text:
+          'It\'s in excellent condition, barely worn. I can send you more photos if you\'d like!',
       time: '10:36 AM',
       isMe: false,
     ),
@@ -67,7 +70,6 @@ class ChatPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        // Kustomisasi Title Bar
         title: Row(
           children: [
             const CircleAvatar(
@@ -80,7 +82,11 @@ class ChatPage extends StatelessWidget {
               children: [
                 Text(
                   chatData.userName,
-                  style: const TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const Text(
                   'Active now',
@@ -97,18 +103,18 @@ class ChatPage extends StatelessWidget {
           )
         ],
       ),
-      
       body: Column(
         children: <Widget>[
           // 1. List Pesan
           Expanded(
             child: ListView.builder(
-              reverse: true, // Opsional: Mulai dari bawah
+              reverse: true,
               padding: const EdgeInsets.symmetric(horizontal: 10.0),
               itemCount: dummyMessages.length,
               itemBuilder: (context, index) {
-                // Menampilkan pesan secara terbalik jika reverse=true
-                return _buildMessageBubble(dummyMessages[dummyMessages.length - 1 - index]);
+                return _buildMessageBubble(
+                  dummyMessages[dummyMessages.length - 1 - index],
+                );
               },
             ),
           ),
@@ -116,7 +122,7 @@ class ChatPage extends StatelessWidget {
           // 2. Card Produk di Bagian Bawah
           _buildProductCard(context),
 
-          // 3. Input Text Bar (Tambahkan placeholder untuk input)
+          // 3. Input Text Bar
           Container(
             padding: const EdgeInsets.all(8.0),
             decoration: BoxDecoration(
@@ -135,7 +141,10 @@ class ChatPage extends StatelessWidget {
                       ),
                       filled: true,
                       fillColor: Colors.grey[100],
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 15,
+                        vertical: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -153,9 +162,10 @@ class ChatPage extends StatelessWidget {
     );
   }
 
-  // Helper Widget: Bubble Chat (Tidak berubah)
+  // Bubble chat
   Widget _buildMessageBubble(Message message) {
-    final alignment = message.isMe ? Alignment.centerRight : Alignment.centerLeft;
+    final alignment =
+        message.isMe ? Alignment.centerRight : Alignment.centerLeft;
     final color = message.isMe ? Colors.black : Colors.grey[200];
     final textColor = message.isMe ? Colors.white : Colors.black;
 
@@ -163,18 +173,26 @@ class ChatPage extends StatelessWidget {
       alignment: alignment,
       margin: const EdgeInsets.only(top: 8, bottom: 8),
       child: Column(
-        crossAxisAlignment: message.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment:
+            message.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14.0,
+              vertical: 10.0,
+            ),
             constraints: const BoxConstraints(maxWidth: 300),
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(15),
                 topRight: const Radius.circular(15),
-                bottomLeft: message.isMe ? const Radius.circular(15) : const Radius.circular(0),
-                bottomRight: message.isMe ? const Radius.circular(0) : const Radius.circular(15),
+                bottomLeft: message.isMe
+                    ? const Radius.circular(15)
+                    : const Radius.circular(0),
+                bottomRight: message.isMe
+                    ? const Radius.circular(0)
+                    : const Radius.circular(15),
               ),
             ),
             child: Text(
@@ -183,7 +201,11 @@ class ChatPage extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: EdgeInsets.only(top: 4.0, right: message.isMe ? 5.0 : 0, left: message.isMe ? 0 : 5.0),
+            padding: EdgeInsets.only(
+              top: 4.0,
+              right: message.isMe ? 5.0 : 0,
+              left: message.isMe ? 0 : 5.0,
+            ),
             child: Text(
               message.time,
               style: const TextStyle(color: Colors.grey, fontSize: 10),
@@ -194,7 +216,7 @@ class ChatPage extends StatelessWidget {
     );
   }
 
-  // Helper Widget: Card Produk yang Dibicarakan (DENGAN TOMBOL INTERAKTIF)
+  // Card produk yang dibicarakan
   Widget _buildProductCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(12.0),
@@ -207,36 +229,44 @@ class ChatPage extends StatelessWidget {
           Container(
             height: 60,
             width: 60,
-            color: Colors.grey[300], // Placeholder gambar produk
+            color: Colors.grey[300], // placeholder gambar produk
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(discussedProduct.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                Text('${discussedProduct.price} • ${discussedProduct.condition}', style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                Text(
+                  discussedProduct.title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '${discussedProduct.price} • ${discussedProduct.condition}',
+                  style: const TextStyle(color: Colors.grey, fontSize: 14),
+                ),
               ],
             ),
           ),
-          
-          // Tombol Interaktif
+
           ElevatedButton(
             onPressed: () {
-              // NAVIGASI KE DETAIL PRODUK SAAT TOMBOL DITEKAN
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProductDetailScreen(product: discussedProduct),
+                  builder: (context) =>
+                      ProductDetailScreen(product: discussedProduct),
                 ),
               );
-            }, 
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               minimumSize: const Size(100, 35),
             ),
-            child: const Text('View Listing', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'View Listing',
+              style: TextStyle(color: Colors.white),
+            ),
           )
         ],
       ),
